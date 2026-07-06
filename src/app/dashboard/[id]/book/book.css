@@ -1,0 +1,334 @@
+/* Book Viewer — five CSS-only templates + print rules. Scoped entirely
+   under .book-root so nothing here leaks into the rest of the dashboard.
+   Templates only redefine custom properties; the page/section markup is
+   shared across all five looks. */
+
+.book-root[data-page-size="a4p"] {
+  --book-page-w-mm: 210;
+  --book-page-h-mm: 297;
+}
+.book-root[data-page-size="a4l"] {
+  --book-page-w-mm: 297;
+  --book-page-h-mm: 210;
+}
+.book-root[data-page-size="a3l"] {
+  --book-page-w-mm: 420;
+  --book-page-h-mm: 297;
+}
+
+/* Print-only stack (see book-viewer.tsx) — a real flip book only ever
+   shows 1–2 pages at a time, so printing reuses the same page content in
+   a plain vertical layout instead. */
+.book-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5rem;
+  padding: 2.5rem 1rem 6rem;
+}
+.book-print-page-frame {
+  position: relative;
+  width: min(84vw, 900px);
+  aspect-ratio: var(--book-page-w-mm) / var(--book-page-h-mm);
+  box-shadow: 0 30px 70px -25px rgba(0, 0, 0, 0.55);
+  flex: none;
+}
+
+/* The interactive flipbook — the real reading experience. .book-page
+   (below) just fills whatever box it's placed in; sizing belongs to the
+   container (a flip slot here, .book-print-page-frame above for print). */
+.book-flip-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 1.5rem;
+}
+
+/* react-pageflip forwards its own classes onto this element directly:
+   stf__item, --hard/--soft (cover vs. regular page), --left/--right
+   (which side of the spread). Styling off those gives an accurate paper
+   thickness + center-binding shadow tied to the book's real geometry,
+   rather than a guessed overlay. */
+.book-flip-page {
+  width: 100%;
+  height: 100%;
+  box-shadow: 0 20px 45px -20px rgba(0, 0, 0, 0.6);
+}
+.book-flip-page.--hard {
+  border: 1px solid color-mix(in srgb, #000 30%, transparent);
+  box-shadow: 0 25px 60px -18px rgba(0, 0, 0, 0.8);
+}
+.book-flip-page.--right {
+  box-shadow: inset 14px 0 26px -18px rgba(0, 0, 0, 0.5);
+}
+.book-flip-page.--left {
+  box-shadow: inset -14px 0 26px -18px rgba(0, 0, 0, 0.5);
+}
+.book-flip-page.--hard.--right {
+  box-shadow:
+    inset 14px 0 26px -18px rgba(0, 0, 0, 0.5),
+    0 25px 60px -18px rgba(0, 0, 0, 0.8);
+}
+.book-flip-page.--hard.--left {
+  box-shadow:
+    inset -14px 0 26px -18px rgba(0, 0, 0, 0.5),
+    0 25px 60px -18px rgba(0, 0, 0, 0.8);
+}
+
+.book-back-cover {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  text-align: center;
+  padding: 6% 10%;
+  background: var(--book-bg);
+  color: var(--book-ink);
+  font-family: var(--book-body-font);
+}
+.book-back-cover-mark {
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.book-page {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--book-bg);
+  color: var(--book-ink);
+  font-family: var(--book-body-font);
+  overflow: hidden;
+}
+
+.book-page-inner {
+  position: absolute;
+  inset: 0;
+  padding: 6% 7%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow: hidden;
+}
+
+.book-heading {
+  font-family: var(--book-display-font);
+  text-transform: var(--book-heading-transform, none);
+  color: var(--book-accent);
+  line-height: 1.15;
+}
+
+.book-eyebrow {
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+.book-rule {
+  border: none;
+  border-top: var(--book-rule-style);
+  margin: 0.75rem 0;
+}
+
+.book-body-text {
+  line-height: 1.65;
+  font-size: 0.92rem;
+  overflow-y: auto;
+}
+.book-body-text p {
+  margin: 0 0 0.75em;
+}
+
+.book-page-number {
+  position: absolute;
+  bottom: 4%;
+  right: 6%;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+}
+
+.book-cover-hero {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.book-cover-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.05) 55%);
+}
+.book-cover-text {
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  bottom: 8%;
+  color: #fff;
+}
+
+.book-toc-entry {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.9rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--book-ink) 25%, transparent);
+}
+.book-toc-entry[data-indent="true"] {
+  padding-left: 1.5rem;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.book-image-full {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.book-image-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+  flex: 1;
+  min-height: 0;
+}
+.book-image-grid img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.book-image-caption {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 0.5rem;
+  right: 0.5rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 0.2rem 0.5rem;
+}
+
+.book-file-card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--book-ink) 30%, transparent);
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.8rem;
+}
+
+.book-video-print-fallback {
+  display: none;
+}
+
+/* ---------------- Templates ---------------- */
+
+.book-root[data-book-template="minimal"] {
+  --book-bg: #ffffff;
+  --book-ink: #1c1c1c;
+  --book-accent: #1c1c1c;
+  --book-display-font: Georgia, "Times New Roman", serif;
+  --book-body-font: Georgia, "Times New Roman", serif;
+  --book-heading-transform: none;
+  --book-rule-style: 1px solid #d8d8d8;
+}
+
+.book-root[data-book-template="modern"] {
+  --book-bg: #f4f4f6;
+  --book-ink: #14141a;
+  --book-accent: #2d5bff;
+  --book-display-font: Arial, Helvetica, sans-serif;
+  --book-body-font: Arial, Helvetica, sans-serif;
+  --book-heading-transform: none;
+  --book-rule-style: 3px solid #2d5bff;
+}
+
+.book-root[data-book-template="architecture-studio"] {
+  --book-bg: #ffffff;
+  --book-ink: #22262b;
+  --book-accent: #b23b2e;
+  --book-display-font: "Courier New", monospace;
+  --book-body-font: Arial, Helvetica, sans-serif;
+  --book-heading-transform: uppercase;
+  --book-rule-style: 1px solid #22262b;
+}
+
+.book-root[data-book-template="competition-board"] {
+  --book-bg: #0b0b0b;
+  --book-ink: #f5f5f5;
+  --book-accent: #ffcf3f;
+  --book-display-font: Impact, "Arial Narrow", "Arial Black", sans-serif;
+  --book-body-font: Arial, Helvetica, sans-serif;
+  --book-heading-transform: uppercase;
+  --book-rule-style: 4px solid #ffcf3f;
+}
+
+.book-root[data-book-template="dark-editorial"] {
+  --book-bg: #0f0d10;
+  --book-ink: #eae3d6;
+  --book-accent: #e3a15c;
+  --book-display-font: var(--font-bodoni), Georgia, serif;
+  --book-body-font: var(--font-archivo), Arial, sans-serif;
+  --book-heading-transform: none;
+  --book-rule-style: 1px solid #262227;
+}
+
+/* ---------------- Print ---------------- */
+/* Exact @page size is injected at print time (book-viewer.tsx) since @page
+   does not accept CSS custom properties — these rules only handle layout,
+   not paper geometry. */
+
+@media print {
+  .print\:hidden {
+    display: none !important;
+  }
+  html,
+  body {
+    background: #fff !important;
+  }
+  /* The screen view fixes .book-root to the viewport height and hides
+     overflow so the flipbook never scrolls — printing needs the opposite:
+     the full, ordinary document flow so every page actually prints. */
+  .book-root {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .book-stage {
+    padding: 0;
+    gap: 0;
+  }
+  .book-print-page-frame {
+    box-shadow: none;
+    width: 100%;
+    height: 100vh;
+    aspect-ratio: auto;
+    break-after: page;
+    page-break-after: always;
+  }
+  .book-print-page-frame:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+  .book-video-screen {
+    display: none;
+  }
+  .book-video-print-fallback {
+    display: block;
+    font-size: 0.75rem;
+    font-style: italic;
+    opacity: 0.75;
+  }
+}

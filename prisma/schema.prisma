@@ -1,0 +1,162 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String      @id @default(cuid())
+  name         String?
+  email        String      @unique
+  passwordHash String
+  createdAt    DateTime    @default(now())
+  portfolios   Portfolio[]
+}
+
+model Portfolio {
+  id          String   @id @default(cuid())
+  title       String
+  headline    String?
+  bio         String?
+  slug        String   @unique
+  isPublished Boolean  @default(false)
+  publishedAt DateTime?
+  // Archive is a distinct lifecycle state from Draft/Published (isPublished)
+  // — an archived portfolio can be either. Hidden from the main list,
+  // recoverable, not the same thing as permanent delete.
+  archivedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projects Project[]
+  skills       Skill[]
+  certificates Certificate[]
+}
+
+model Project {
+  id           String    @id @default(cuid())
+  title        String
+  description  String?
+  role         String?
+  startDate    DateTime?
+  endDate      DateTime?
+  // SQLite has no native array type; Flutter's Appwrite `tags` string list
+  // is mirrored here as a comma-joined string, split/joined in application
+  // code (see lib/core/utils/validators.dart parseTags() for the Flutter
+  // reference behavior this must match: trim, drop empty/over-length,
+  // de-dupe case-insensitively, cap at 20).
+  tags         String    @default("")
+  externalLink String?
+  isFeatured   Boolean   @default(false)
+  sortOrder    Int       @default(0)
+  // Soft delete, matching Flutter's deletedAt convention (Query.isNull
+  // filters live rows) — enables the "undo" snackbar after deleting.
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  portfolioId String
+  portfolio   Portfolio      @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  assets      ProjectAsset[]
+  sections    Section[]
+}
+
+enum AssetKind {
+  IMAGE
+  PDF
+  VIDEO
+}
+
+model ProjectAsset {
+  id     String    @id @default(cuid())
+  kind   AssetKind
+  // Appwrite Storage identifiers — the actual file bytes live in Appwrite,
+  // this row is only the reference + display metadata.
+  appwriteBucketId String
+  appwriteFileId   String
+  fileName         String
+  mimeType         String
+  sizeBytes        Int
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  // Nullable: null means "project-level asset" (unchanged, pre-existing
+  // behavior). Set means this asset is attached to a specific Section's
+  // media block. SetNull (not Cascade) on Section delete — deleting a
+  // page of the book demotes its media back to the project's general
+  // library rather than deleting the underlying Appwrite file, which is
+  // always an explicit, separate action (matches duplicatePortfolio's
+  // reasoning for never silently touching Appwrite storage as a side effect).
+  sectionId String?
+  section   Section? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  // Only meaningful for section-attached media; null for project-level assets.
+  caption   String?
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+// A project is built from an ordered stack of Sections (pages) — e.g.
+// Cover, Concept, Site Analysis, Plans, Renderings — each with its own
+// rich content, attached media, and layout hint. Titles are free text,
+// not an enum; the UI offers a few suggested titles as a convenience only.
+model Section {
+  id         String    @id @default(cuid())
+  title      String
+  // Tiptap HTML output. Defaults to "" so a brand-new section has valid
+  // state before its first autosave lands (mirrors Project's optional-
+  // string convention).
+  content    String    @default("")
+  // Free-text, not an enum, so adding a new layout option never needs a
+  // migration — the UI constrains choices via a fixed <select> + "Other".
+  layoutType String    @default("standard")
+  // Plain user scratchpad notes today — no AI reads or writes this field
+  // yet; it exists so the field is real when AI does land, not fake.
+  aiNotes    String    @default("")
+  sortOrder  Int       @default(0)
+  // Soft delete, same convention as Project (enables undo).
+  deletedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  projectId String
+  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assets    ProjectAsset[]
+}
+
+model Skill {
+  id        String   @id @default(cuid())
+  name      String
+  // Plain string, not an enum — the UI offers a fixed <select> list
+  // (Beginner/Intermediate/Advanced/Expert) without needing a migration
+  // to relabel later.
+  level     String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  portfolioId String
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+}
+
+model Certificate {
+  id            String    @id @default(cuid())
+  title         String
+  issuer        String?
+  issueDate     DateTime?
+  credentialUrl String?
+  sortOrder     Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  portfolioId String
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+}

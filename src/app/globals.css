@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Editorial palette + type — scoped for use only within the (marketing)
+   route group (landing, sign in, sign up). Dashboard/editor/AI pages are
+   untouched and keep the tokens above. */
+@theme {
+  --color-ground: #0f0d10;
+  --color-ground-raised: #18151a;
+  --color-ground-line: #262227;
+  --color-ink: #eae3d6;
+  --color-ink-dim: #a79c8c;
+  --color-ink-faint: #6f6656;
+  --color-ember: #e3a15c;
+  --color-ember-soft: #7a5430;
+  --font-display: var(--font-bodoni);
+  --font-editorial: var(--font-archivo);
+  --font-meta: var(--font-space-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Marketing-only ambient motion. Purely decorative (aria-hidden at every
+   call site), so disabling it under reduced-motion loses nothing
+   functional. */
+@keyframes ember-drift {
+  0%,
+  100% {
+    background-position:
+      20% 15%,
+      0 0;
+  }
+  50% {
+    background-position:
+      68% 55%,
+      0 0;
+  }
+}
+.animate-ember-drift {
+  background-image: radial-gradient(circle at 30% 25%, rgba(227, 161, 92, 0.12), transparent 55%);
+  background-size: 160% 160%;
+  animation: ember-drift 28s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-ember-drift {
+    animation: none;
+  }
+}
+
+/* Portfolio Library header — a subtle grid + film-grain texture, scoped
+   entirely to this one class so it never leaks onto any other page. Pure
+   CSS/SVG, no image asset. */
+.library-texture::before,
+.library-texture::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.library-texture::before {
+  background-image:
+    linear-gradient(to right, rgba(234, 227, 214, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(234, 227, 214, 0.04) 1px, transparent 1px);
+  background-size: 42px 42px;
+}
+.library-texture::after {
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Auth field focus state. Written as plain (unlayered) CSS deliberately:
+   Tailwind v4 generates focus:/focus-visible: variants inside its own
+   @layer, and something about the layer ordering here was letting
+   .border-ground-line's unlayered-relative-lower-priority color still
+   win over focus:border-ember despite matching correctly (verified via
+   el.matches(':focus') in a real browser — the pseudo-class matched, the
+   rule existed, but the color never rendered). Unlayered CSS always
+   beats layered CSS in the cascade regardless of specificity, so this is
+   a guaranteed fix rather than another guess at utility ordering. */
+.field-input:focus {
+  border-color: var(--color-ember);
+}
+.field-input:focus-visible {
+  outline: 2px solid var(--color-ember);
+  outline-offset: 4px;
+}
+
+/* Tiptap ships no styling of its own — scoped narrowly to the Section
+   Editor's content area so it matches the dashboard's dark-theme tokens
+   without leaking into the rest of the app. */
+.section-tiptap-content {
+  color: var(--color-ink);
+  line-height: 1.7;
+}
+.section-tiptap-content p {
+  margin: 0.75em 0;
+}
+.section-tiptap-content h2 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.5rem;
+  color: var(--color-ink);
+  margin: 1.2em 0 0.4em;
+}
+.section-tiptap-content h3 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.2rem;
+  color: var(--color-ink);
+  margin: 1em 0 0.4em;
+}
+.section-tiptap-content ul,
+.section-tiptap-content ol {
+  padding-left: 1.4em;
+  margin: 0.75em 0;
+}
+.section-tiptap-content li {
+  margin: 0.25em 0;
+}
+.section-tiptap-content blockquote {
+  border-left: 2px solid var(--color-ember-soft);
+  padding-left: 1em;
+  color: var(--color-ink-dim);
+  font-style: italic;
+  margin: 0.75em 0;
+}
