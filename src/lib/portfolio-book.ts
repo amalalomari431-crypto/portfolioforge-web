@@ -98,10 +98,6 @@ export async function buildPortfolioBook(portfolioId: string): Promise<Portfolio
     })),
   }));
 
-  const heroImage = projects
-    .flatMap((p) => p.sections.flatMap((s) => s.assets))
-    .find((a) => a.kind === "IMAGE");
-
   return {
     portfolioId: portfolio.id,
     title: portfolio.title,
@@ -110,7 +106,7 @@ export async function buildPortfolioBook(portfolioId: string): Promise<Portfolio
     userName: portfolio.user.name ?? "",
     isPublished: portfolio.isPublished,
     slug: portfolio.slug,
-    heroImageUrl: heroImage ? heroImage.url : null,
+    heroImageUrl: null,
     skills: portfolio.skills.map((s) => ({ id: s.id, name: s.name, level: s.level })),
     certificates: portfolio.certificates.map((c) => ({
       id: c.id,
